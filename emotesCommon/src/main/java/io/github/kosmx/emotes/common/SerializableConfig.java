@@ -8,6 +8,7 @@ import java.util.function.Consumer;
 public class SerializableConfig {
     public final ArrayList<ConfigEntry<?>> basics = new ArrayList<>();
     public final ArrayList<ConfigEntry<?>> expert = new ArrayList<>();
+    public final ArrayList<ConfigEntry<?>> hidden = new ArrayList<>();
 
     /**
      * changelog
@@ -19,10 +20,10 @@ public class SerializableConfig {
 
     public int configVersion; //this has a different job... not a config
 
-    public final BooleanConfigEntry showDebug = new BooleanConfigEntry("debug", "showDebug", true, false, expert);
-    public final BooleanConfigEntry validateEmote = new BooleanConfigEntry("validate", false, true, expert);
+    public final BooleanConfigEntry showDebug = new BooleanConfigEntry("debug", "showDebug", true, false, hidden);
+    public final BooleanConfigEntry validateEmote = new BooleanConfigEntry("validate", false, true, hidden);
 
-    public final FloatConfigEntry<Float> validThreshold = new FloatConfigEntry<>("validationThreshold", "validThreshold", 8f, true, expert, "options.generic_value", 0.2f, 16f, 0f);
+    public final FloatConfigEntry<Float> validThreshold = new FloatConfigEntry<>("validationThreshold", "validThreshold", 8f, true, hidden, "options.generic_value", 0.2f, 16f, 0f);
 
 
     public int[] fastMenuHash = new int[8];
