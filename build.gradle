@@ -1,18 +1,18 @@
 plugins{
-    id 'java'
-    id 'dev.architectury.loom' version '0.10.0-SNAPSHOT' apply false //Forge loom :D
-    id "architectury-plugin" version "3.4-SNAPSHOT" apply false
-    id "com.github.johnrengelman.shadow" version "7.0.0" apply false
-    //id "com.dorongold.task-tree" version "1.5" Current version doesn't support gradle 6.8
+    id "dev.architectury.loom" version "1.9-SNAPSHOT" apply false
+    id "architectury-plugin" version "3.4-SNAPSHOT" apply true
+    id "com.gradleup.shadow" version "8.3.5" apply false
 
-    id 'com.matthewprenger.cursegradle' version '1.4.0' apply false
-    id "com.github.breadmoirai.github-release" version "2.2.12"
-    id "com.modrinth.minotaur" version "1.2.1"
-    id "io.freefair.lombok" version "6.2.0"
+    id "com.matthewprenger.cursegradle" version "1.4.0" apply false
+    id "com.github.breadmoirai.github-release" version "2.4.1"
+    id "com.modrinth.minotaur" version "2.8.4" apply false
 }
 
 
 allprojects {
+    apply plugin: "java"
+
+    group = rootProject.maven_group
 
     repositories {
         maven{
@@ -20,8 +20,12 @@ allprojects {
             url = 'https://maven.terraformersmc.com/'
         }
         maven {
+            url 'https://repo.redlance.org/public'
+        }
+        maven {
             url "https://libraries.minecraft.net"
         }
+        maven { url "https://maven.neoforged.net/releases" }
     }
 
     tasks.withType(JavaCompile).configureEach {
@@ -32,8 +36,8 @@ allprojects {
         sourceCompatibility = JavaVersion.toVersion(targetVersion)
         targetCompatibility = JavaVersion.toVersion(targetVersion)
 
-        options.compilerArgs << '-Xlint:unchecked'
-        options.deprecation = true	//deprecated warning on compile
+        //options.compilerArgs << '-Xlint:unchecked'
+        //options.deprecation = true	//deprecated warning on compile
         repositories {
             mavenCentral()
         }
@@ -43,6 +47,14 @@ allprojects {
         }
     }
 
+    compileJava.options.encoding = 'UTF-8'
+    tasks.withType(JavaCompile) {
+        options.encoding = 'UTF-8'
+    }
+
+    java {
+        withSourcesJar()
+    }
 }
 
 //---------------- Publishing ----------------
@@ -56,54 +68,29 @@ ext.mod_version = project.version_base
 
 
 if(!isRelease){
-    ext.mod_version = "${project.version_base}-SNAPSHOT-${ ENV.BUILD_NUMBER ? "build.${ENV.BUILD_NUMBER}" : 'git rev-parse --verify --short HEAD'.execute().text.trim()}"
+    ext.mod_version = "${project.version_base}-${cfType[0]}.${ ENV.BUILD_NUMBER ? "build.${ENV.BUILD_NUMBER}" : 'git rev-parse --verify --short HEAD'.execute().text.trim()}"
 }
 
 
-import com.modrinth.minotaur.TaskModrinthUpload
-import com.modrinth.minotaur.request.VersionType
-
 List<File> releaseArtifacts
 
-ext.keysExists = ENV.GH_TOKEN != null;
+ext.keysExists = ENV.GH_TOKEN != null || project.getGradle().getStartParameter().isDryRun()
 
 if(keysExists) {
-    println("Keys loaded, loading publish scripts")
     project.ext.keys = new Properties()
-    project.ext.keys.modrinth_token = ENV.MODRINTH_TOKEN
-    project.ext.keys.curseforge_key = ENV.CURSEFORGE_TOKEN
-    project.ext.keys.github_token = ENV.GH_TOKEN
-    project.ext.keys.kosmx_maven = ENV.KOSMX_TOKEN
-
-
-    task publishModrinth(type: TaskModrinthUpload) {
-        if(project.isRelease){
-            versionType = VersionType.RELEASE
-        }
-        else{
-            versionType = VersionType.ALPHA
-        }
-        token = project.keys.modrinth_token;
-        // Get the GitHub Access Token you got from the basics part of this tutorial.
-        projectId = "pZ2wrerK" // Enter your modrinth mod ID here.
-        //System.out.println("Enter the version number:");
-        versionNumber = "${project.mod_version}"
-        versionName = "${project.mod_version}"
-        //uploadFile = releaseArtifacts.get(0)
-        //additionalFiles = releaseArtifacts.subList(1, releaseArtifacts.size())
-                           //"forge/build/libs/emotecraft-for-MC${project.minecraft_version}-${project.mod_version}-forge.jar"]
-        //uploadFile = tasks.fabric.remapJar
-        //System.out.println("Enter the game version number: (See minotaur docs for valids)");
-        addGameVersion('1.16.5');
-        addGameVersion('1.17');
-        changelog = changes;
-        addLoader("fabric")
-        addLoader("forge")
-        failSilently = false
-        doLast {
-            uploadFile = releaseArtifacts.get(0)
-            additionalFiles = releaseArtifacts.subList(1, releaseArtifacts.size())
-        }
+    if (project.getGradle().getStartParameter().isDryRun()) {
+        println("Dry run, loading publish scripts")
+        //All of these are fake, don't waste your time with it. (Copied from API docs and random generated)
+        project.ext.keys.modrinth_token = "gho_pJ9dGXVKpfzZp4PUHSxYEq9hjk0h288Gwj4S"
+        project.ext.keys.curseforge_key = "00000000-0000-0000-0000-000000000000"
+        project.ext.keys.github_token = "gh_0123456789"
+        project.ext.keys.kosmx_maven = "V2h5IGRpZCB5b3UgZGVjb2RlIGl0PyAg"
+    } else {
+        println("Keys loaded, loading publish scripts")
+        project.ext.keys.modrinth_token = ENV.MODRINTH_TOKEN
+        project.ext.keys.curseforge_key = ENV.CURSEFORGE_TOKEN
+        project.ext.keys.github_token = ENV.GH_TOKEN
+        project.ext.keys.kosmx_maven = ENV.KOSMX_TOKEN
     }
 
 
@@ -137,18 +124,21 @@ if(keysExists) {
         //Configure Modrinth and GitHub with artifacts to release
         doFirst {
             tasks.githubRelease.releaseAssets = releaseArtifacts
-            tasks.publishModrinth.uploadFile = releaseArtifacts.get(0)
-            tasks.publishModrinth.additionalFiles = releaseArtifacts.subList(1, releaseArtifacts.size())
         }
 
         finalizedBy(tasks.githubRelease)
-        finalizedBy(publishModrinth)
 
-        finalizedBy(':16:publishToCF')
-        finalizedBy(':17:publishToCF')
-        
+        finalizedBy(':minecraft:publishMod')
+
         finalizedBy(':emotesAPI:publish')
+        finalizedBy(':executor:publish')
+        finalizedBy(':emotesServer:publish')
+        finalizedBy(':emotesAssets:publish')
+        finalizedBy(':bukkit:publish')
 
+        finalizedBy(":bukkit:modrinth")
+        finalizedBy(":bungee:modrinth")
+        finalizedBy(":velocity:modrinth")
     }
 }
 else {
@@ -158,7 +148,9 @@ else {
 //Build all modules task :D
 task buildAll{
     dependsOn(':bukkit:build')
-    dependsOn(':16:buildAll', ':17:buildAll')
+    dependsOn(':bungee:build')
+    dependsOn(':velocity:build')
+    dependsOn(':minecraft:buildAll')
 }
 
 task cleanupArtifacts{
@@ -170,7 +162,9 @@ task cleanupArtifacts{
 task collectArtifacts{
     dependsOn('cleanupArtifacts')
     dependsOn(':bukkit:copyArtifacts')
-    dependsOn(':16:copyArtifacts', ':17:copyArtifacts')
+    dependsOn(':bungee:copyArtifacts')
+    dependsOn(':velocity:copyArtifacts')
+    dependsOn('minecraft:copyArtifacts')
     doLast {
         releaseArtifacts = project.getProjectDir().toPath().resolve("artifacts").toFile().listFiles()
     }

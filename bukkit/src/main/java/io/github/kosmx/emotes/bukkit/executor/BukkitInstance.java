@@ -3,41 +3,31 @@ package io.github.kosmx.emotes.bukkit.executor;
 import io.github.kosmx.emotes.bukkit.BukkitWrapper;
 import io.github.kosmx.emotes.executor.EmoteInstance;
 import io.github.kosmx.emotes.executor.Logger;
-import io.github.kosmx.emotes.executor.dataTypes.IClientMethods;
-import io.github.kosmx.emotes.executor.dataTypes.IDefaultTypes;
-import io.github.kosmx.emotes.executor.dataTypes.IGetters;
 
-import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.logging.Level;
 
-public class BukkitInstance extends EmoteInstance {
-    final java.util.logging.Logger logger;
-    final BukkitWrapper plugin;
+public class BukkitInstance extends EmoteInstance implements Logger {
+    protected final BukkitWrapper plugin;
 
     public BukkitInstance(BukkitWrapper plugin){
-        this.logger = plugin.getLogger();
         this.plugin = plugin;
     }
 
     @Override
     public Logger getLogger() {
-        return this.logger::log;
+        return this;
     }
 
     @Override
-    public IDefaultTypes getDefaults() {
-        return null;
+    public void writeLog(Level level, String msg, Throwable throwable) {
+        this.plugin.getLogger().log(level, msg, throwable);
     }
 
     @Override
-    public IGetters getGetters() {
-        return null;
-    }
-
-    @Override
-    public IClientMethods getClientMethods() {
-        return null;
+    public void writeLog(Level level, String msg) {
+        this.plugin.getLogger().log(level, msg);
     }
 
     @Override
@@ -48,10 +38,5 @@ public class BukkitInstance extends EmoteInstance {
     @Override
     public Path getGameDirectory() {
         return Paths.get("");
-    }
-
-    @Override
-    public File getExternalEmoteDir() {
-        return Paths.get("").resolve("emotes").toFile();
     }
 }

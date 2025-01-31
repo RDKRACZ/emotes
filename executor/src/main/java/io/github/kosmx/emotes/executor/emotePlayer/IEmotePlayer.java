@@ -1,6 +1,6 @@
 package io.github.kosmx.emotes.executor.emotePlayer;
 
-import io.github.kosmx.emotes.common.emote.EmoteData;
+import dev.kosmx.playerAnim.core.data.KeyframeAnimation;
 
 public interface IEmotePlayer {
     boolean isRunning();
@@ -9,11 +9,11 @@ public interface IEmotePlayer {
         return emotePlayer != null && emotePlayer.isRunning();
     }
 
-    void tick();
-
     boolean isLoopStarted();
 
-    EmoteData getData();
+    void tick();
+
+    KeyframeAnimation getData();
 
     int getTick();
 }

@@ -9,24 +9,28 @@ import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.UUID;
+import java.util.function.Consumer;
 
 /**
  * To hold information about network
- *
+ * <p>
  * implement {@link AbstractNetworkInstance} if you want to implement only the necessary functions
- *
+ * <p>
  * use this interface if you want to do something completely different
  */
 public interface INetworkInstance {
+
+
     /**
      * Get the version from the other side. null if default
      * the map doesn't have to contain information about every module. these will be added automatically.
-     *
+     * <p>
      * do {@code HashMap#put(3, 0)} to disable sound streaming. NBS can't be optimized and often very large
      *
      * @return maybe null
      */
-    HashMap<Byte, Byte> getVersions();
+    @SuppressWarnings("deprecated")
+    HashMap<Byte, Byte> getRemoteVersions();
 
     /**
      * Receive (and save) versions from the other side
@@ -38,7 +42,10 @@ public interface INetworkInstance {
      * Invoked after receiving the presence packet
      * {@link INetworkInstance#setVersions(HashMap)}
      * Used to send server-side config/emotes
+     *
+     * @deprecated communication changes
      */
+    @Deprecated
     default void presenceResponse(){}
 
     /**
@@ -46,6 +53,14 @@ public interface INetworkInstance {
      * @return true means send
      */
     default boolean sendPlayerID(){
+        return false;
+    }
+
+    /**
+     * Does this server allow emote streams from client. This can allow larger/longer emotes but can be abused
+     * @return
+     */
+    default boolean allowEmoteStreamC2S() {
         return false;
     }
 
@@ -72,11 +87,19 @@ public interface INetworkInstance {
 
     /**
      * You are asked to send your config.
-     * From 2.1 client will start the config exchange and the server will reply
-     *
-     * This shall be invoked when the server is ready to receive packets
+     * From 2.2 in the MC configuration phase, the server will initialize config, the client will reply.
+     * <p>
+     * @deprecated ambiguous name, use {@link #sendC2SConfig(Consumer)}
      */
-    void sendConfigCallback();
+    @Deprecated
+    default void sendConfigCallback() {}
+
+    /**
+     * Client is sending config message to server. Vanilla clients will answer to the server configuration phase message.
+     * This might get invoked multiple times on the same network instance.
+     */
+    default void sendC2SConfig(Consumer<EmotePacket.Builder> consumer) {
+    }
 
     /**
      * when receiving a message, it contains a player. If you don't trust in this information, override this and return false
@@ -111,8 +134,14 @@ public interface INetworkInstance {
     int getRemoteVersion();
 
     /**
+     * Does the track the emote play state of every player -> true
+     * The client has to resend the emote if a new player get close -> false
+     */
+    boolean isServerTrackingPlayState();
+
+    /**
      * Maximum size of the data what the instance can send
-     *
+     * <p>
      * {@link AbstractNetworkInstance#maxDataSize()} defaults to {@link Short#MAX_VALUE}
      * @return max size of bytes[]
      */

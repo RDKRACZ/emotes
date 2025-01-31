@@ -1,9 +1,9 @@
 package io.github.kosmx.emotes.common.tools;
 
-import io.github.kosmx.emotes.api.Pair;
+
+import dev.kosmx.playerAnim.core.util.Pair;
 
 import javax.annotation.Nonnull;
-import java.io.Serializable;
 import java.util.*;
 
 /**
@@ -43,7 +43,9 @@ public class BiMap<L, R> implements Collection<Pair<L, R>> {
         if(lToR.containsKey(l) || rToL.containsKey(r)){
             ol = rToL.remove(r);
             or = lToR.remove(l);
-            collection.removeIf(obj -> obj.getLeft() == l || obj.getRight() == r);
+            ol = ol != null ? ol :  rToL.remove(or);
+            or = or != null ? or : lToR.remove(ol);
+            collection.removeIf(obj -> obj.getLeft().equals(l) || obj.getRight().equals(r));
             //collection.remove(new Pair<>(ol, or));
         }
         rToL.put(r, l);

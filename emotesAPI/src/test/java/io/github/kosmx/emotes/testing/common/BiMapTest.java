@@ -1,13 +1,11 @@
 package io.github.kosmx.emotes.testing.common;
 
-import io.github.kosmx.emotes.api.Pair;
+import dev.kosmx.playerAnim.core.util.Pair;
 import io.github.kosmx.emotes.common.tools.BiMap;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.nio.file.Path;
-import java.util.Objects;
 import java.util.Random;
 
 public class BiMapTest {

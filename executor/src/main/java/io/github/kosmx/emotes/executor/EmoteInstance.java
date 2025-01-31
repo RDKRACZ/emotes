@@ -2,9 +2,6 @@ package io.github.kosmx.emotes.executor;
 
 
 import io.github.kosmx.emotes.common.SerializableConfig;
-import io.github.kosmx.emotes.executor.dataTypes.IDefaultTypes;
-import io.github.kosmx.emotes.executor.dataTypes.IClientMethods;
-import io.github.kosmx.emotes.executor.dataTypes.IGetters;
 
 import java.io.File;
 import java.io.IOException;
@@ -16,27 +13,36 @@ public abstract class EmoteInstance {
 
 
     public static SerializableConfig config = null;
+
     public abstract Logger getLogger();
-
-    public abstract IDefaultTypes getDefaults();
-
-    public abstract IGetters getGetters();
-
-    public abstract IClientMethods getClientMethods();
 
     public abstract boolean isClient();
 
     public abstract Path getGameDirectory();
-    public abstract File getExternalEmoteDir();
-    public Path getConfigPath(){
-        if(!Files.exists(getGameDirectory().resolve("config"))){
-            try {
-                Files.createDirectories(getGameDirectory().resolve("config"));
+
+    public File getExternalEmoteDir(){
+        return getGameDirectory().resolve(config.emotesDir.get()).toFile();
+    }
+
+    public Path getConfigPath() {
+        String directoryName = "config";
+
+        try {
+            directoryName = System.getProperty("emotecraftConfigDir", "config");
+            if (directoryName.equals("pluginDefault")) {
+                directoryName = "plugins/emotecraft";
             }
-            catch (IOException ignore){
+
+        } catch(Throwable ignore) { }
+
+
+        if (!Files.exists(getGameDirectory().resolve(directoryName))) {
+            try {
+                Files.createDirectories(getGameDirectory().resolve(directoryName));
+            } catch(IOException ignore) {
             }
         }
-        return getGameDirectory().resolve("config").resolve("emotecraft.json");
+        return getGameDirectory().resolve(directoryName).resolve("emotecraft.json");
     }
 
 }

@@ -1,22 +1,24 @@
 package io.github.kosmx.emotes.executor.emotePlayer;
 
-import io.github.kosmx.emotes.common.emote.EmoteData;
-import io.github.kosmx.emotes.common.tools.Vec3d;
+import dev.kosmx.playerAnim.core.data.KeyframeAnimation;
+import dev.kosmx.playerAnim.core.util.Vec3d;
 
 import javax.annotation.Nullable;
 import java.util.UUID;
 
 //Every player will be IEmotePlayer
-public interface IEmotePlayerEntity<T extends IEmotePlayer > extends IPlayerEntity{
+public interface IEmotePlayerEntity {
 
     //void init();
 
-    void playEmote(EmoteData emote, int tick);
-
-    @Nullable
-    T getEmote();
+    void emotecraft$playEmote(KeyframeAnimation emote, int tick, boolean isForced);
 
     boolean isPlayingEmote();
+
+
+    @Nullable
+    IEmotePlayer emotecraft$getEmote();
+
 
     void stopEmote(UUID emoteID);
 
@@ -27,18 +29,24 @@ public interface IEmotePlayerEntity<T extends IEmotePlayer > extends IPlayerEnti
 
     boolean isMainPlayer();
 
-    boolean isNotStanding();
+    boolean emotecraft$isNotStanding();
 
-    Vec3d emotesGetPos();
+    Vec3d emotecraft$emotesGetPos();
 
-    Vec3d getPrevPos();
+    Vec3d emotecraft$getPrevPos();
 
-    float getBodyYaw();
-    float getViewYaw();
-    void setBodyYaw(float newYaw);
+    float emotecraft$getBodyYaw();
+    float emotecraft$getViewYaw();
+    void emotecraft$setBodyYaw(float newYaw);
 
     void emoteTick();
 
     default void emoteTickCallback(){}
     default void emoteStartPlayCallback(){}
+
+    boolean emotecraft$isForcedEmote();
+
+    UUID emotes_getUUID();
+
+    default void emotecraft$playerEntersInvalidPose() {}
 }

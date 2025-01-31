@@ -3,10 +3,12 @@ package io.github.kosmx.emotes.bukkit.network;
 import io.github.kosmx.emotes.api.proxy.AbstractNetworkInstance;
 import io.github.kosmx.emotes.bukkit.BukkitWrapper;
 import io.github.kosmx.emotes.common.CommonData;
+import io.github.kosmx.emotes.server.network.EmotePlayTracker;
 import io.github.kosmx.emotes.server.network.IServerNetworkInstance;
 import org.bukkit.entity.Player;
 
 import javax.annotation.Nullable;
+import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.UUID;
 
@@ -15,12 +17,29 @@ public class BukkitNetworkInstance extends AbstractNetworkInstance implements IS
     final Player player;
     final BukkitWrapper bukkitPlugin = BukkitWrapper.getPlugin(BukkitWrapper.class);
 
+    private final EmotePlayTracker emotePlayTracker = new EmotePlayTracker();
+
+    @Override
+    public EmotePlayTracker getEmoteTracker() {
+        return this.emotePlayTracker;
+    }
+
+    @Override
+    public void sendGeyserPacket(ByteBuffer buffer) {
+        player.sendPluginMessage(bukkitPlugin, "geyser:emote", buffer.array());
+    }
+
+    @Override
+    public void disconnect(String literal) {
+        player.kickPlayer(literal);
+    }
+
     public BukkitNetworkInstance(Player player){
         this.player = player;
     }
 
     @Override
-    public HashMap<Byte, Byte> getVersions() {
+    public HashMap<Byte, Byte> getRemoteVersions() {
         return version;
     }
 
@@ -39,4 +58,15 @@ public class BukkitNetworkInstance extends AbstractNetworkInstance implements IS
         return true;
     }
 
+    @Override
+    @SuppressWarnings({"deprecation", "unchecked"})
+    public void presenceResponse() {
+        super.presenceResponse();
+        ServerSideEmotePlay.getInstance().presenceResponse(this, trackPlayState());
+        for (Player player :bukkitPlugin.getServer().getOnlinePlayers()) {
+            if (this.player.canSee(player)) {
+                ServerSideEmotePlay.getInstance().playerStartTracking(player, this.player);
+            }
+        }
+    }
 }
